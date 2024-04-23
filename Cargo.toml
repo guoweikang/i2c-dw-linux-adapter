@@ -1,0 +1,11 @@
+[package]
+name = "i2c_dw_linux_adapt"
+version = "0.1.0"
+edition = "2021"
+authors = ["Guoweikang <guoweikang.kernel@gmail.com>"]
+description = "I2C DW linux adapater"
+license = "GPL-3.0-or-later OR Apache-2.0"
+homepage = ""
+
+[dependencies]
+dw_apb_i2c = { git = "https://github.com/guoweikang/i2c-designware.git", rev = "a97ab7557c2e71d9a9509668c038812b0ab1119d"}

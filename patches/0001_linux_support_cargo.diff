@@ -1,0 +1,61 @@
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index 333a7686e185..ea189166e0d1 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -272,12 +272,24 @@ rust_common_cmd = \
+ 	-Zallow-features=$(rust_allowed_features) \
+ 	-Zcrate-attr=no_std \
+ 	-Zcrate-attr='feature($(rust_allowed_features))' \
+-	--extern alloc --extern kernel \
++	--extern alloc --extern kernel --extern osl \
+ 	--crate-type rlib -L $(objtree)/rust/ \
+ 	--crate-name $(basename $(notdir $@)) \
+ 	--sysroot=/dev/null \
+ 	--out-dir $(dir $@) --emit=dep-info=$(depfile)
+ 
++CARGO_BUILD_RUSTFLAGS =  $(rust_flags)  \
++			--extern alloc --extern kernel --extern osl --extern core \
++			-L $(abspath $(objtree))/rust/ \
++			--sysroot=/dev/null \
++			--emit=dep-info,obj \
++
++
++# remove flags edition
++CARGO_BUILD_RUSTFLAGS := $(shell echo $(CARGO_BUILD_RUSTFLAGS) | sed 's/--edition=[0-9]\{4\}//g')
++
++export CARGO_BUILD_RUSTFLAGS
++
+ # `--emit=obj`, `--emit=asm` and `--emit=llvm-ir` imply a single codegen unit
+ # will be used. We explicitly request `-Ccodegen-units=1` in any case, and
+ # the compiler shows a warning if it is not 1. However, if we ever stop
+@@ -312,6 +324,17 @@ quiet_cmd_rustc_ll_rs = $(RUSTC_OR_CLIPPY_QUIET) $(quiet_modtag) $@
+ $(obj)/%.ll: $(src)/%.rs FORCE
+ 	$(call if_changed_dep,rustc_ll_rs)
+ 
++cmd_cargo_build = RUST_MODFILE=$(modfile) $(CARGO) build \
++	         --target-dir $(dir $@)target \
++	         --manifest-path $(srctree)/$(dir $@)/Cargo.toml \
++	         --release --verbose 
++
++#$(obj)/cargo-%.o: $(srctree)/$(src)/$*/src/lib.rs FORCE
++$(obj)/cargo-%.o: FORCE
++	$(call if_changed,cargo_build)
++	ld.lld -r $$(ls -d $(dir $@)target/release/deps/* | grep '.*[\.o]$$') \
++	-o $@
++
+ # Compile assembler sources (.S)
+ # ---------------------------------------------------------------------------
+ 
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index 68d0134bdbf9..b0defa2ba311 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -232,7 +232,7 @@ c_flags        = -Wp,-MMD,$(depfile) $(NOSTDINC_FLAGS) $(LINUXINCLUDE)     \
+ 		 $(_c_flags) $(modkern_cflags)                           \
+ 		 $(basename_flags) $(modname_flags)
+ 
+-rust_flags     = $(_rust_flags) $(modkern_rustflags) @$(objtree)/include/generated/rustc_cfg
++rust_flags     = $(_rust_flags) $(modkern_rustflags) @$(abspath $(objtree))/include/generated/rustc_cfg
+ 
+ a_flags        = -Wp,-MMD,$(depfile) $(NOSTDINC_FLAGS) $(LINUXINCLUDE)     \
+ 		 $(_a_flags) $(modkern_aflags)
