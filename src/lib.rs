@@ -6,7 +6,7 @@
 
 mod core_base;
 
-pub(crate) use dw_apb_i2c::{I2cTiming, I2cSpeedMode};
+pub(crate) use i2c_common::{I2cTiming, I2cSpeedMode};
 pub(crate) use dw_apb_i2c::{I2cDwMasterDriver, I2cDwDriverConfig};
 
 use kernel::{module_platform_driver, of, platform, prelude::*};

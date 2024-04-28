@@ -10,3 +10,5 @@ homepage = ""
 [dependencies]
 #dw_apb_i2c = { git = "https://github.com/guoweikang/i2c-designware.git", rev = "d483b1fb8c4dee14d402ede5c7c5d8263041f629"}
 dw_apb_i2c = { path = "../i2c-designware/"}
+#i2c_common = { git = "https://github.com/guoweikang/i2c-common.git"}
+i2c_common = { path = "../i2c-common/"}

@@ -1,5 +1,5 @@
 use crate::{I2cSpeedMode, I2cTiming};
-use dw_apb_i2c::I2cTimingBuilder;
+use i2c_common::I2cTimingBuilder;
 
 use kernel::device::Device;
 use kernel::{c_str, str::CStr};
