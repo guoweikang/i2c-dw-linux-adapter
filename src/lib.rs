@@ -6,7 +6,7 @@
 
 mod core_base;
 
-pub(crate) use i2c_common::{I2cTiming, I2cSpeedMode};
+pub(crate) use i2c_common::{I2cTiming, I2cSpeedMode, msg};
 pub(crate) use dw_apb_i2c::{I2cDwMasterDriver, I2cDwDriverConfig};
 
 use kernel::{
@@ -56,21 +56,32 @@ static I2C_DW_QUIRKS: bindings::i2c_adapter_quirks =  bindings::i2c_adapter_quir
 };
 
 struct DwI2cDriver;
-
 type DeviceData = device::Data<i2c::Registration<DwI2cDriver>, I2cDwMasterDriver, ()>;
 
 #[vtable]
 impl i2c::I2cAlgo for DwI2cDriver {
     type Data = Arc<DeviceData>;
-
-    fn master_xfer(_data: ArcBorrow<'_, DeviceData>, _msgs: I2cMsg) -> Result {
+    fn master_xfer(_data: ArcBorrow<'_, DeviceData>, msgs: &I2cMsg, msg_num: usize) -> Result {
+        use core::slice;
         pr_info!("=============== enter master_xfer");
+        let trans_msgs = msgs.into_array(msg_num,
+            |x:&mut bindings::i2c_msg| {
+            msg::I2cMsg::new(x.addr, 
+                msg::I2cMsgFlags::from_bits(x.flags).unwrap(),
+                unsafe {slice::from_raw_parts(x.buf, x.len as usize)})
+        })?;
+
+        for m in trans_msgs {
+            pr_info!("================ send msg : {:?}", m);
+        }
+
         Ok(())
     }
 
-    fn functionality(_data: ArcBorrow<'_,DeviceData>) -> u32 {
-        pr_info!("=============== enter functionality");
-        0
+    fn functionality(data: ArcBorrow<'_,DeviceData>) -> u32 {
+        let master_driver = data.resources().unwrap();
+        pr_info!("======= get functionality {:?}",master_driver.get_functionality().bits());
+        master_driver.get_functionality().bits()
     }
 }
 
