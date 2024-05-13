@@ -59,7 +59,6 @@ impl i2c::I2cAlgo for DwI2cDriver {
     type Data = Arc<DeviceData>;
     fn master_xfer(_data: ArcBorrow<'_, DeviceData>, msgs: &I2cMsg, msg_num: usize) -> Result {
         use core::slice;
-        pr_info!("=============== enter master_xfer");
         let trans_msgs = msgs.into_array(msg_num, |x: &mut bindings::i2c_msg| {
             msg::I2cMsg::new(
                 x.addr,
@@ -68,19 +67,14 @@ impl i2c::I2cAlgo for DwI2cDriver {
             )
         })?;
 
-        for m in trans_msgs {
-            pr_info!("================ send msg : {:?}", m);
-        }
+        let master_driver = data.resources().unwrap();
+        master_driver.master_xfer(trans_msgs)?;
 
         Ok(())
     }
 
     fn functionality(data: ArcBorrow<'_, DeviceData>) -> u32 {
         let master_driver = data.resources().unwrap();
-        pr_info!(
-            "======= get functionality {:?}",
-            master_driver.get_functionality().bits()
-        );
         master_driver.get_functionality().bits()
     }
 }
