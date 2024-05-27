@@ -5,8 +5,8 @@
 #![no_std]
 
 mod core_base;
-pub(crate) use dw_apb_i2c::{I2cDwDriverConfig, I2cDwMasterDriver};
-pub(crate) use i2c_common::{msg, I2cSpeedMode, I2cTiming};
+use dw_apb_i2c::{I2cDwDriverConfig, I2cDwMasterDriver};
+use osl::driver::i2c::I2cMsgFlags;
 
 use kernel::{
     irq,
@@ -98,7 +98,7 @@ impl I2cAlgo for DwI2cAlgo {
     type Data = Arc<DwI2cData>;
     fn master_xfer(data: ArcBorrow<'_, DwI2cData>, msgs: &I2cMsg, msg_num: usize) -> Result<i32> {
         let trans_msgs = msgs.into_array(msg_num, |x: &mut bindings::i2c_msg| {
-            msg::I2cMsg::new(x.addr, msg::I2cMsgFlags::from_bits(x.flags).unwrap(), x.buf, x.len as usize)
+            osl::driver::i2c::I2cMsg::new_raw(x.addr, I2cMsgFlags::from_bits(x.flags).unwrap(), x.buf, x.len as usize)
         })?;
 
         let master_driver = &data.driver;
